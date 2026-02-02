@@ -278,7 +278,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             card.innerHTML = `
                 <div class="event-image">
-                    <img src="${imageUrl}" alt="${event.title}">
+                    <img src="${imageUrl}" alt="${event.title}" style="width: 100%; height: 100%; object-fit: cover; object-position: center;">
                     <span class="event-badge">${index < 3 ? 'Trending' : 'Popular'}</span>
                     <span class="event-date">${formattedDate}</span>
                 </div>
@@ -736,26 +736,45 @@ Please present this receipt at the venue entry.
             submitBtn.textContent = 'Creating Account...';
             submitBtn.disabled = true;
             
-            // For now, simulate registration and auto-login
-            isMerchantLoggedIn = true;
-            currentMerchant = {
-                id: 1, // In real app, this would come from the API response
-                companyName: companyName,
-                contactName: contactName,
-                email: email,
-                phone: phone,
-                businessType: businessType
-            };
-            
-            // Show success step
-            showMerchantStep('success');
-            
-            // Reset form
-            merchantRegisterForm.reset();
-            
-            // Reset button
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
+            // Call the registration API
+            fetch('http://localhost:8000/api_register_merchant.py', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: formData.toString()
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Set the merchant with real ID from API
+                    isMerchantLoggedIn = true;
+                    currentMerchant = {
+                        id: data.data.id,
+                        companyName: data.data.companyName,
+                        contactName: data.data.fullName,
+                        email: data.data.email,
+                        phone: phone,
+                        businessType: businessType
+                    };
+                    
+                    // Show success step
+                    showMerchantStep('success');
+                    
+                    // Reset form
+                    merchantRegisterForm.reset();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to create account. Please try again.');
+            })
+            .finally(() => {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            });
         });
     }
     

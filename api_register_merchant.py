@@ -1,7 +1,7 @@
 """
-API - Create Event Endpoint
+API - Register Merchant Endpoint
 Run with: python -m http.server 8000
-Access at: http://localhost:8000/api_create_event.py
+Access at: http://localhost:8000/api_register_merchant.py
 """
 
 import json
@@ -16,7 +16,7 @@ class DateTimeEncoder(json.JSONEncoder):
             return obj.isoformat()
         return super().default(obj)
 
-class CreateEventHandler(BaseHTTPRequestHandler):
+class RegisterMerchantHandler(BaseHTTPRequestHandler):
     def send_cors_headers(self):
         """Send CORS headers"""
         self.send_header('Access-Control-Allow-Origin', '*')
@@ -32,7 +32,7 @@ class CreateEventHandler(BaseHTTPRequestHandler):
     
     def do_POST(self):
         """
-        Handle POST requests to create events
+        Handle POST requests to register merchants
         """
         try:
             # Get POST data
@@ -44,9 +44,9 @@ class CreateEventHandler(BaseHTTPRequestHandler):
             data = {k: v[0] for k, v in data.items()}
             
             # Validate required fields
-            required_fields = ['organizerId', 'venueId', 'title', 'description', 'category', 'eventDate', 'standardPrice', 'vipPrice']
+            required_fields = ['fullName', 'email', 'phone', 'idNumber', 'password', 'companyName']
             for field in required_fields:
-                if field not in data:
+                if field not in data or not data[field]:
                     self.send_response(400)
                     self.send_header('Content-Type', 'application/json')
                     self.send_cors_headers()
@@ -57,25 +57,21 @@ class CreateEventHandler(BaseHTTPRequestHandler):
                     }, cls=DateTimeEncoder).encode())
                     return
             
-            organizer_id = int(data['organizerId'])
-            venue_id = int(data['venueId'])
-            title = data['title']
-            description = data['description']
-            category = data['category']
-            event_date = data['eventDate']
-            standard_price = float(data['standardPrice'])
-            vip_price = float(data['vipPrice'])
-            image_url = data.get('imageUrl', '')
+            full_name = data['fullName']
+            email = data['email']
+            phone = data['phone']
+            id_number = data['idNumber']
+            password = data['password']
+            company_name = data['companyName']
+            business_type = data.get('businessType', 'events')
             
             # Get database connection
             conn = get_db_connection()
             cursor = conn.cursor(dictionary=True)
             
-            # Verify organizer exists
-            cursor.execute("SELECT id, user_type FROM users WHERE id = %s", (organizer_id,))
-            organizer = cursor.fetchone()
-            
-            if not organizer:
+            # Check if email already exists
+            cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+            if cursor.fetchone():
                 close_connection(conn)
                 self.send_response(400)
                 self.send_header('Content-Type', 'application/json')
@@ -83,36 +79,17 @@ class CreateEventHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(json.dumps({
                     'success': False,
-                    'message': 'Organizer not found'
+                    'message': 'Email already registered'
                 }, cls=DateTimeEncoder).encode())
                 return
             
-            # Verify venue exists
-            cursor.execute("SELECT id FROM venues WHERE id = %s", (venue_id,))
-            venue = cursor.fetchone()
-            
-            if not venue:
-                # Auto-create default venue
-                cursor.execute("""
-                    INSERT INTO venues (name, address, city, capacity, description)
-                    VALUES ('Default Venue', 'Nairobi', 'Nairobi', 1000, 'Auto-created default venue')
-                """)
-                venue_id = cursor.lastrowid
-                conn.commit()
-            
-            # Insert the event
+            # Insert the merchant/user
             cursor.execute("""
-                INSERT INTO events (organizer_id, venue_id, title, description, category, event_date, standard_price, vip_price, image_url, status)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'published')
-            """, (organizer_id, venue_id, title, description, category, event_date, standard_price, vip_price, image_url))
+                INSERT INTO users (full_name, email, phone, id_number, password, user_type)
+                VALUES (%s, %s, %s, %s, %s, 'organizer')
+            """, (full_name, email, phone, id_number, password))
             
-            event_id = cursor.lastrowid
-            
-            # Insert ticket types
-            cursor.execute("""
-                INSERT INTO ticket_types (event_id, type_name, price, available_quantity, sold_quantity)
-                VALUES (%s, 'standard', %s, 1000, 0), (%s, 'vip', %s, 100, 0)
-            """, (event_id, standard_price, event_id, vip_price))
+            user_id = cursor.lastrowid
             
             # Commit and close
             conn.commit()
@@ -125,11 +102,13 @@ class CreateEventHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({
                 'success': True,
-                'message': 'Event created successfully',
+                'message': 'Merchant registered successfully',
                 'data': {
-                    'eventId': event_id,
-                    'title': title,
-                    'eventDate': event_date
+                    'id': user_id,
+                    'fullName': full_name,
+                    'email': email,
+                    'companyName': company_name,
+                    'userType': 'organizer'
                 }
             }, cls=DateTimeEncoder).encode())
             
@@ -154,7 +133,7 @@ class CreateEventHandler(BaseHTTPRequestHandler):
 if __name__ == '__main__':
     from http.server import HTTPServer
     
-    server = HTTPServer(('localhost', 8000), CreateEventHandler)
-    print("Create Event API running on http://localhost:8000")
-    print("Use POST to /api_create_event.py")
+    server = HTTPServer(('localhost', 8000), RegisterMerchantHandler)
+    print("Register Merchant API running on http://localhost:8000")
+    print("Use POST to /api_register_merchant.py")
     server.serve_forever()

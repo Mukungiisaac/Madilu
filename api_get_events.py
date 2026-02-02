@@ -7,6 +7,13 @@ Access at: http://localhost:8000/api_get_events.py
 import json
 from db_connection import get_db_connection, close_connection, format_price
 from http.server import BaseHTTPRequestHandler
+from datetime import datetime
+
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
 
 class EventsHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -30,10 +37,15 @@ class EventsHandler(BaseHTTPRequestHandler):
             
             # Format data
             for event in events:
+                event['standard_price'] = float(event['standard_price'])
+                event['vip_price'] = float(event['vip_price'])
+
                 event['standard_price_formatted'] = format_price(event['standard_price'])
                 event['vip_price_formatted'] = format_price(event['vip_price'])
+
                 event['event_date_formatted'] = event['event_date'].strftime('%b %d, %Y') if event['event_date'] else ''
                 event['event_date'] = event['event_date'].isoformat() if event['event_date'] else None
+
             
             close_connection(conn)
             
@@ -47,7 +59,7 @@ class EventsHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({
                 'success': True,
                 'data': events
-            }).encode())
+            }, cls=DateTimeEncoder).encode())
             
         except Exception as e:
             print(f"Error: {e}")
@@ -59,7 +71,7 @@ class EventsHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({
                     'success': False,
                     'message': str(e)
-                }).encode())
+                }, cls=DateTimeEncoder).encode())
             except:
                 pass
     
