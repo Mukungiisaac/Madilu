@@ -248,6 +248,48 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
     
+    // Animate Happy Users counter (counts from 0 to 50K and loops)
+    function animateHappyUsersCounter() {
+        const counterElement = document.querySelector('.stat-number[data-target="50000"]');
+        if (!counterElement) return;
+        
+        let currentCount = 0;
+        const targetCount = 50000;
+        const incrementSpeed = 10; // ms per increment
+        const pauseDuration = 1000; // ms to pause at target
+        
+        function countUp() {
+            // Add K suffix when reaching certain thresholds
+            if (currentCount < 10000) {
+                currentCount += 100;
+            } else if (currentCount < 40000) {
+                currentCount += 500;
+            } else {
+                currentCount += 100;
+            }
+            
+            if (currentCount >= targetCount) {
+                currentCount = targetCount;
+                counterElement.textContent = currentCount.toLocaleString() + '+';
+                
+                // Pause then reset and start again
+                setTimeout(() => {
+                    currentCount = 0;
+                    countUp();
+                }, pauseDuration);
+            } else {
+                counterElement.textContent = currentCount.toLocaleString();
+                setTimeout(countUp, incrementSpeed);
+            }
+        }
+        
+        // Start the animation
+        countUp();
+    }
+    
+    // Initialize counter animation
+    animateHappyUsersCounter();
+    
     // Generate event cards dynamically
     function generateEventCards(events) {
         const eventsGrid = document.querySelector('.events-grid');
@@ -802,7 +844,7 @@ Please present this receipt at the venue entry.
             // Prepare form data
             const formData = new URLSearchParams();
             formData.append('organizerId', currentMerchant.id);
-            formData.append('venueId', 1); // Default venue, you may want to create venues dynamically
+            formData.append('venueName', eventVenue); // Use the venue name from form
             formData.append('title', eventTitle);
             formData.append('description', eventDescription);
             formData.append('category', eventCategory);

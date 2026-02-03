@@ -58,7 +58,8 @@ class CreateEventHandler(BaseHTTPRequestHandler):
                     return
             
             organizer_id = int(data['organizerId'])
-            venue_id = int(data['venueId'])
+            venue_id = data.get('venueId')
+            venue_name = data.get('venueName', '')
             title = data['title']
             description = data['description']
             category = data['category']
@@ -87,12 +88,29 @@ class CreateEventHandler(BaseHTTPRequestHandler):
                 }, cls=DateTimeEncoder).encode())
                 return
             
-            # Verify venue exists
-            cursor.execute("SELECT id FROM venues WHERE id = %s", (venue_id,))
-            venue = cursor.fetchone()
+            # Verify venue exists (by ID or by name)
+            if venue_id and str(venue_id).isdigit():
+                cursor.execute("SELECT id, name FROM venues WHERE id = %s", (venue_id,))
+                venue = cursor.fetchone()
+                if not venue:
+                    venue_id = None
             
-            if not venue:
-                # Auto-create default venue
+            # If no valid venue ID, try to find by name or create new
+            if not venue_id and venue_name:
+                cursor.execute("SELECT id, name FROM venues WHERE name = %s", (venue_name,))
+                venue = cursor.fetchone()
+                if venue:
+                    venue_id = venue['id']
+                else:
+                    # Create new venue with the provided name
+                    cursor.execute("""
+                        INSERT INTO venues (name, address, city, capacity, description)
+                        VALUES (%s, 'Address Pending', 'Nairobi', 1000, 'Auto-created venue')
+                    """, (venue_name,))
+                    venue_id = cursor.lastrowid
+                    conn.commit()
+            elif not venue_id:
+                # No venue provided, create default venue
                 cursor.execute("""
                     INSERT INTO venues (name, address, city, capacity, description)
                     VALUES ('Default Venue', 'Nairobi', 'Nairobi', 1000, 'Auto-created default venue')
