@@ -12,17 +12,17 @@
     <nav>
         <div class="nav-container">
             <div class="logo">
-                <span class="logo-icon"><img src="images/logo.png" alt="iTech Studio Logo" style="height: 45px; width: auto;"></span>
+                <span class="logo-icon"><img src="images/logo.png" alt="iTech Studio Logo" style="height: 40px; width: auto;"></span>
                 <span class="logo-text">iTech Events</span>
             </div>
-            <ul class="nav-links">
-                <li><a href="#home" class="active">Home</a></li>
-                <li><a href="#events">Events</a></li>
-                <li><a href="#categories">Categories</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#contact">Contact</a></li>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#home" class="active"><i class="fas fa-home"></i>Home</a></li>
+                <li><a href="#events"><i class="fas fa-calendar-alt"></i>Events</a></li>
+                <li><a href="#categories"><i class="fas fa-th-large"></i>Categories</a></li>
+                <li><a href="#about"><i class="fas fa-info-circle"></i>About</a></li>
+                <li><a href="#contact"><i class="fas fa-envelope"></i>Contact</a></li>
             </ul>
-            <div class="nav-actions">
+            <div class="nav-actions" id="navActions">
                 <button class="btn btn-outline" id="signInBtn">Sign In</button>
                 <button class="btn btn-primary" id="postEventBtn">Post Event</button>
             </div>
@@ -76,135 +76,12 @@
             <h2>Featured Events</h2>
             <p>Don't miss out on these amazing experiences</p>
         </div>
-        <div class="events-grid">
-            <!-- Event Card 1 -->
-            <div class="event-card">
-                <div class="event-image">
-                    <img src="images/event-music.jpg" alt="Music Concert">
-                    <span class="event-badge">Trending</span>
-                    <span class="event-date">Dec 15, 2024</span>
-                </div>
-                <div class="event-details">
-                    <span class="event-category"><i class="fas fa-guitar"></i> Music</span>
-                    <h3>Winter Music Festival 2024</h3>
-                    <p class="event-venue"><i class="fas fa-map-marker-alt"></i> Nairobi Convention Center</p>
-                    <p class="event-description">Experience an unforgettable night with top African artists performing live.</p>
-                    <div class="event-footer">
-                        <div class="event-price">
-                            <span class="price-from">From</span>
-                            <span class="price-amount">KSh 3,250</span>
-                        </div>
-                        <button class="btn btn-primary btn-sm get-tickets" data-event="Winter Music Festival 2024" data-price="3250">Get Tickets</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Event Card 2 -->
-            <div class="event-card">
-                <div class="event-image">
-                    <img src="images/event-tech.jpg" alt="Tech Conference">
-                    <span class="event-badge featured">Featured</span>
-                    <span class="event-date">Dec 20, 2024</span>
-                </div>
-                <div class="event-details">
-                    <span class="event-category"><i class="fas fa-microchip"></i> Technology</span>
-                    <h3>Tech Innovation Summit</h3>
-                    <p class="event-venue"><i class="fas fa-map-marker-alt"></i> Kempinski Hotel, Nairobi</p>
-                    <p class="event-description">Join industry leaders for insights on AI, blockchain, and future tech.</p>
-                    <div class="event-footer">
-                        <div class="event-price">
-                            <span class="price-from">From</span>
-                            <span class="price-amount">KSh 19,500</span>
-                        </div>
-                        <button class="btn btn-primary btn-sm get-tickets" data-event="Tech Innovation Summit" data-price="19500">Get Tickets</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Event Card 3 -->
-            <div class="event-card">
-                <div class="event-image">
-                    <img src="images/event-food.jpg" alt="Food Festival">
-                    <span class="event-date">Dec 22, 2024</span>
-                </div>
-                <div class="event-details">
-                    <span class="event-category"><i class="fas fa-utensils"></i> Food & Drink</span>
-                    <h3>African Food Festival</h3>
-                    <p class="event-venue"><i class="fas fa-map-marker-alt"></i> Uhuru Park, Nairobi</p>
-                    <p class="event-description">Taste the finest African cuisines from top chefs across the continent.</p>
-                    <div class="event-footer">
-                        <div class="event-price">
-                            <span class="price-from">From</span>
-                            <span class="price-amount">KSh 1,950</span>
-                        </div>
-                        <button class="btn btn-primary btn-sm get-tickets" data-event="African Food Festival" data-price="1950">Get Tickets</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Event Card 4 -->
-            <div class="event-card">
-                <div class="event-image">
-                    <img src="images/event-sports.jpg" alt="Sports Event">
-                    <span class="event-badge">Popular</span>
-                    <span class="event-date">Dec 28, 2024</span>
-                </div>
-                <div class="event-details">
-                    <span class="event-category"><i class="fas fa-running"></i> Sports</span>
-                    <h3>Championship Final Match</h3>
-                    <p class="event-venue"><i class="fas fa-map-marker-alt"></i> Kasarani Stadium</p>
-                    <p class="event-description">Watch the ultimate showdown between top competing teams.</p>
-                    <div class="event-footer">
-                        <div class="event-price">
-                            <span class="price-from">From</span>
-                            <span class="price-amount">KSh 3,900</span>
-                        </div>
-                        <button class="btn btn-primary btn-sm get-tickets" data-event="Championship Final Match" data-price="3900">Get Tickets</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Event Card 5 -->
-            <div class="event-card">
-                <div class="event-image">
-                    <img src="images/event-business.jpg" alt="Business Event">
-                    <span class="event-badge featured">Featured</span>
-                    <span class="event-date">Jan 5, 2025</span>
-                </div>
-                <div class="event-details">
-                    <span class="event-category"><i class="fas fa-briefcase"></i> Business</span>
-                    <h3>Entrepreneurship Workshop</h3>
-                    <p class="event-venue"><i class="fas fa-map-marker-alt"></i> iHub, Nairobi</p>
-                    <p class="event-description">Learn from successful entrepreneurs and network with peers.</p>
-                    <div class="event-footer">
-                        <div class="event-price">
-                            <span class="price-from">From</span>
-                            <span class="price-amount">KSh 6,500</span>
-                        </div>
-                        <button class="btn btn-primary btn-sm get-tickets" data-event="Entrepreneurship Workshop" data-price="6500">Get Tickets</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Event Card 6 -->
-            <div class="event-card">
-                <div class="event-image">
-                    <img src="images/event-arts.jpg" alt="Arts Event">
-                    <span class="event-date">Jan 10, 2025</span>
-                </div>
-                <div class="event-details">
-                    <span class="event-category"><i class="fas fa-mask"></i> Arts & Theater</span>
-                    <h3>Contemporary Art Exhibition</h3>
-                    <p class="event-venue"><i class="fas fa-map-marker-alt"></i> Nairobi National Museum</p>
-                    <p class="event-description">Explore stunning artworks from emerging African artists.</p>
-                    <div class="event-footer">
-                        <div class="event-price">
-                            <span class="price-from">From</span>
-                            <span class="price-amount">KSh 2,600</span>
-                        </div>
-                        <button class="btn btn-primary btn-sm get-tickets" data-event="Contemporary Art Exhibition" data-price="2600">Get Tickets</button>
-                    </div>
-                </div>
+        <div class="events-grid" id="eventsGrid">
+            <!-- Events will be dynamically loaded from database -->
+            <div class="no-events-message" id="noEventsMessage" style="display: none;">
+                <i class="fas fa-calendar-times"></i>
+                <h3>No Events Available</h3>
+                <p>Check back later for upcoming events.</p>
             </div>
         </div>
         <div class="view-all-container">
@@ -340,6 +217,87 @@
             <p>&copy; 2026 iTech Events. All rights reserved.</p>
         </div>
     </footer>
+
+    <!-- Merchant Login Modal -->
+    <div id="merchantLoginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeMerchantLoginModal()">&times;</span>
+            <h2><i class="fas fa-user-tie"></i> Merchant Login</h2>
+            <p class="modal-subtitle">Sign in to access your merchant dashboard</p>
+            
+            <form id="merchantLoginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email Address *</label>
+                    <input type="email" id="loginEmail" name="email" required placeholder="Enter your email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="loginPassword">Password *</label>
+                    <input type="password" id="loginPassword" name="password" required placeholder="Enter your password">
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-full">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            </form>
+            
+            <div class="auth-switch">
+                <p>Don't have an account? <a href="#" onclick="switchToRegister()">Register as Merchant</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Merchant Registration Modal -->
+    <div id="merchantRegisterModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeMerchantRegisterModal()">&times;</span>
+            <h2><i class="fas fa-store"></i> Become a Merchant</h2>
+            <p class="modal-subtitle">Create your merchant account and start posting events</p>
+            
+            <form id="merchantRegisterForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="regFullName">Full Name *</label>
+                        <input type="text" id="regFullName" name="fullName" required placeholder="Enter your full name">
+                    </div>
+                    <div class="form-group">
+                        <label for="regCompanyName">Company Name *</label>
+                        <input type="text" id="regCompanyName" name="companyName" required placeholder="Your business name">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="regEmail">Email Address *</label>
+                        <input type="email" id="regEmail" name="email" required placeholder="Enter your email">
+                    </div>
+                    <div class="form-group">
+                        <label for="regPhone">Phone Number *</label>
+                        <input type="tel" id="regPhone" name="phone" required placeholder="e.g., 254712345678">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="regIdNumber">ID/Passport Number *</label>
+                        <input type="text" id="regIdNumber" name="idNumber" required placeholder="Enter your ID number">
+                    </div>
+                    <div class="form-group">
+                        <label for="regPassword">Password *</label>
+                        <input type="password" id="regPassword" name="password" required placeholder="Create a password">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-full">
+                    <i class="fas fa-user-plus"></i> Create Account
+                </button>
+            </form>
+            
+            <div class="auth-switch">
+                <p>Already have an account? <a href="#" onclick="switchToLogin()">Login here</a></p>
+            </div>
+        </div>
+    </div>
 
     <!-- Ticket Booking Modal -->
     <div id="ticketModal" class="modal">
@@ -563,7 +521,7 @@
                 <h2><i class="fas fa-user-plus"></i> Merchant Registration</h2>
                 <p class="modal-subtitle">Create your merchant account to start posting events.</p>
                 
-                <form id="merchantRegisterForm">
+                <form id="merchantRegisterForm" onsubmit="handleRegistration(event)">
                     <div class="form-group">
                         <label for="companyName">Company/Organization Name *</label>
                         <input type="text" id="companyName" name="companyName" required placeholder="Enter company name">
@@ -585,13 +543,24 @@
                     </div>
                     
                     <div class="form-group">
+                        <label for="regIdNumber">ID/Passport Number *</label>
+                        <input type="text" id="regIdNumber" name="regIdNumber" required placeholder="Enter your ID or passport number">
+                    </div>
+                    
+                    <div class="form-group">
                         <label for="regPassword">Password *</label>
-                        <input type="password" id="regPassword" name="regPassword" required placeholder="Create a password" minlength="6">
+                        <div class="password-input-container">
+                            <input type="password" id="regPassword" name="regPassword" required placeholder="Create a password" minlength="6">
+                            <button type="button" class="toggle-password" onclick="togglePassword('regPassword', this)"><i class="fas fa-eye"></i></button>
+                        </div>
                     </div>
                     
                     <div class="form-group">
                         <label for="confirmPassword">Confirm Password *</label>
-                        <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Confirm your password">
+                        <div class="password-input-container">
+                            <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Confirm your password">
+                            <button type="button" class="toggle-password" onclick="togglePassword('confirmPassword', this)"><i class="fas fa-eye"></i></button>
+                        </div>
                     </div>
                     
                     <div class="form-group">

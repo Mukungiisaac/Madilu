@@ -53,6 +53,29 @@ document.addEventListener('DOMContentLoaded', function() {
         totalPrice: 0
     };
     
+    // Update UI based on merchant login state
+    function updateMerchantUI() {
+        const signInBtn = document.getElementById('signInBtn');
+        const postEventBtn = document.getElementById('postEventBtn');
+        
+        if (isMerchantLoggedIn && currentMerchant) {
+            // Update Sign In button to show merchant name
+            if (signInBtn) {
+                signInBtn.textContent = currentMerchant.companyName || currentMerchant.fullName;
+                signInBtn.onclick = function() {
+                    window.location.href = 'merchant_dashboard.html';
+                };
+            }
+            // Update Post Event button
+            if (postEventBtn) {
+                postEventBtn.textContent = 'Dashboard';
+                postEventBtn.onclick = function() {
+                    window.location.href = 'merchant_dashboard.html';
+                };
+            }
+        }
+    }
+    
     // Initialize
     init();
     
@@ -236,15 +259,30 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(apiUrl)
             .then(response => response.json())
             .then(data => {
+                const eventsGrid = document.querySelector('#eventsGrid');
+                const noEventsMessage = document.getElementById('noEventsMessage');
+                
                 if (data.success && data.data.length > 0) {
+                    // Hide the no events message
+                    if (noEventsMessage) {
+                        noEventsMessage.style.display = 'none';
+                    }
                     generateEventCards(data.data);
                 } else {
-                    // Show fallback static events if API fails or no events
-                    console.log('No events from API, using static events');
+                    // Show the no events message
+                    if (noEventsMessage) {
+                        noEventsMessage.style.display = 'block';
+                    }
+                    console.log('No events in database');
                 }
             })
             .catch(error => {
-                console.log('API not available, using static events:', error);
+                // Show the no events message on error
+                const noEventsMessage = document.getElementById('noEventsMessage');
+                if (noEventsMessage) {
+                    noEventsMessage.style.display = 'block';
+                }
+                console.log('API not available, showing no events message:', error);
             });
     }
     
@@ -561,26 +599,46 @@ Please present this receipt at the venue entry.
     const logoutFromPost = document.getElementById('logoutFromPost');
     
     // Forms
-    const merchantLoginForm = document.getElementById('merchantLoginForm');
-    const merchantRegisterForm = document.getElementById('merchantRegisterForm');
+    const merchantLoginForm = merchantModal
+        ? merchantModal.querySelector('#merchantLoginForm')
+        : document.getElementById('merchantLoginForm');
+    const merchantRegisterForm = merchantModal
+        ? merchantModal.querySelector('#merchantRegisterForm')
+        : document.getElementById('merchantRegisterForm');
     const postEventForm = document.getElementById('postEventForm');
     
     // Simulated logged in state
     let isMerchantLoggedIn = false;
     let currentMerchant = null;
     
+    // Check for existing session on page load
+    const savedMerchant = localStorage.getItem('merchantData');
+    if (savedMerchant) {
+        try {
+            currentMerchant = JSON.parse(savedMerchant);
+            isMerchantLoggedIn = true;
+            console.log('Restored session from localStorage:', currentMerchant);
+        } catch (e) {
+            console.error('Failed to parse saved merchant data:', e);
+            localStorage.removeItem('merchantData');
+        }
+    }
+    
+    // Update UI based on login state
+    updateMerchantUI();
+    
     // Open merchant modal when clicking "Post Event"
     if (postEventBtn) {
         postEventBtn.addEventListener('click', function() {
             if (isMerchantLoggedIn) {
-                // Show post event form directly
-                showPostEventStep();
+                // Already logged in, redirect to dashboard
+                window.location.href = 'merchant_dashboard.html';
             } else {
                 // Show login/register choice
                 showMerchantStep('choice');
+                merchantModal.style.display = 'block';
+                document.body.style.overflow = 'hidden';
             }
-            merchantModal.style.display = 'block';
-            document.body.style.overflow = 'hidden';
         });
     }
     
@@ -588,8 +646,8 @@ Please present this receipt at the venue entry.
     if (signInBtn) {
         signInBtn.addEventListener('click', function() {
             if (isMerchantLoggedIn) {
-                // User is already logged in, show logout option
-                alert('You are logged in as ' + (currentMerchant?.name || currentMerchant?.companyName));
+                // Already logged in, redirect to dashboard
+                window.location.href = 'merchant_dashboard.html';
             } else {
                 // Show login form directly
                 showMerchantStep('login');
@@ -711,56 +769,109 @@ Please present this receipt at the venue entry.
         });
     }
     
-    // Merchant login form submission
+    // Merchant login form submission (with API)
     if (merchantLoginForm) {
         merchantLoginForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            // Simulate login (in real app, this would be an API call)
-            if (email && password) {
-                isMerchantLoggedIn = true;
-                currentMerchant = { 
-                    id: 1, // In real app, this would come from the API
-                    email: email, 
-                    name: email.split('@')[0] 
-                };
-                
-                // Show success message
-                alert('Login successful! Welcome back, ' + currentMerchant.name);
-                
-                // Show post event form
-                showPostEventStep();
-                
-                // Reset form
-                merchantLoginForm.reset();
+
+            const form = e.target.closest('form');
+            const emailInput = form ? form.querySelector('#loginEmail') : null;
+            const passwordInput = form ? form.querySelector('#loginPassword') : null;
+            const email = emailInput ? emailInput.value : '';
+            const password = passwordInput ? passwordInput.value : '';
+
+            if (!email || !password) {
+                alert('Please enter your email and password.');
+                return;
             }
+
+            // Prepare form data
+            const formData = new URLSearchParams();
+            formData.append('email', email);
+            formData.append('password', password);
+
+            // Show loading
+            const submitBtn = merchantLoginForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Signing in...';
+            submitBtn.disabled = true;
+
+            // Call API
+            fetch('http://localhost:8000/api_login_merchant.py', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: formData.toString()
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Login failed with status: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    isMerchantLoggedIn = true;
+                    currentMerchant = {
+                        id: data.data.id,
+                        fullName: data.data.fullName,
+                        companyName: data.data.companyName || email.split('@')[0],
+                        email: data.data.email,
+                        phone: data.data.phone || '',
+                        userType: data.data.userType
+                    };
+
+                    localStorage.setItem('merchantData', JSON.stringify(currentMerchant));
+
+                    closeMerchantModalFn();
+                    window.location.href = 'merchant_dashboard.html';
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Login error:', error);
+                alert('Failed to login. Error: ' + error.message + '. Please check if the server is running on port 8000.');
+            })
+            .finally(() => {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            });
         });
     }
     
     // Merchant registration form submission
+    // Merchant registration form submission
     if (merchantRegisterForm) {
-        merchantRegisterForm.addEventListener('submit', function(e) {
+        merchantRegisterForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const password = document.getElementById('regPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
+            // Get the form element that triggered the event
+            const form = e.target.closest('form');
             
-            // Validate password match
+            console.log('Registration form submitted!');
+            
+            const password = form.querySelector('#regPassword').value;
+            const confirmPassword = form.querySelector('#confirmPassword').value;
+            
+            console.log('Password:', password);
+            console.log('Confirm Password:', confirmPassword);
+            
             if (password !== confirmPassword) {
                 alert('Passwords do not match!');
                 return;
             }
             
             // Collect form data
-            const companyName = document.getElementById('companyName').value;
-            const contactName = document.getElementById('contactName').value;
-            const email = document.getElementById('regEmail').value;
-            const phone = document.getElementById('regPhone').value;
-            const businessType = document.getElementById('businessType').value;
-            const idNumber = document.getElementById('idNumber').value;
+            const companyName = form.querySelector('#companyName').value;
+            const contactName = form.querySelector('#contactName').value;
+            const email = form.querySelector('#regEmail').value;
+            const phone = form.querySelector('#regPhone').value;
+            const idNumber = form.querySelector('#regIdNumber').value;
+            const businessType = form.querySelector('#businessType').value;
+            
+            console.log('Form data:', {companyName, contactName, email, phone, idNumber, businessType});
             
             // Prepare form data for API
             const formData = new URLSearchParams();
@@ -772,53 +883,137 @@ Please present this receipt at the venue entry.
             formData.append('companyName', companyName);
             formData.append('businessType', businessType);
             
+            console.log('Sending API request...');
+            
             // Show loading
             const submitBtn = merchantRegisterForm.querySelector('button[type="submit"]');
             const originalText = submitBtn.textContent;
             submitBtn.textContent = 'Creating Account...';
             submitBtn.disabled = true;
             
-            // Call the registration API
-            fetch('http://localhost:8000/api_register_merchant.py', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: formData.toString()
-            })
-            .then(response => response.json())
-            .then(data => {
+            try {
+                const response = await fetch('http://localhost:8000/api_register_merchant.py', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData.toString()
+                });
+                
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    const text = await response.text();
+                    console.log('Response text:', text);
+                    alert('Error: ' + response.status + ' - ' + text);
+                    return;
+                }
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
                 if (data.success) {
                     // Set the merchant with real ID from API
                     isMerchantLoggedIn = true;
                     currentMerchant = {
                         id: data.data.id,
                         companyName: data.data.companyName,
-                        contactName: data.data.fullName,
+                        fullName: data.data.fullName,
                         email: data.data.email,
                         phone: phone,
-                        businessType: businessType
+                        businessType: businessType,
+                        userType: 'organizer'
                     };
                     
-                    // Show success step
-                    showMerchantStep('success');
+                    // Store in localStorage
+                    localStorage.setItem('merchantData', JSON.stringify(currentMerchant));
+                    console.log('Saved to localStorage:', localStorage.getItem('merchantData'));
                     
-                    // Reset form
-                    merchantRegisterForm.reset();
+                    alert('Registration successful! Redirecting to dashboard...');
+                    
+                    // Redirect to merchant dashboard
+                    window.location.href = 'merchant_dashboard.html';
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to create account: ' + error.message);
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+    }
+    
+    /*
+    // Merchant login form submission (with API)
+    if (merchantLoginForm) {
+        merchantLoginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            // Prepare form data
+            const formData = new URLSearchParams();
+            formData.append('email', email);
+            formData.append('password', password);
+            
+            // Show loading
+            const submitBtn = merchantLoginForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+            submitBtn.disabled = true;
+            
+            // Call API
+            fetch('http://localhost:8000/api_login_merchant.py', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: formData.toString()
+            })
+            .then(response => {
+                console.log('Login API response status:', response.status);
+                if (!response.ok) {
+                    throw new Error('API call failed with status: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Login API response data:', data);
+                if (data.success) {
+                    // Set the merchant with real ID from API
+                    isMerchantLoggedIn = true;
+                    currentMerchant = {
+                        id: data.data.id,
+                        fullName: data.data.fullName,
+                        companyName: data.data.companyName || email.split('@')[0],
+                        email: data.data.email,
+                        phone: data.data.phone || '',
+                        userType: data.data.userType
+                    };
+                    
+                    // Store in localStorage
+                    localStorage.setItem('merchantData', JSON.stringify(currentMerchant));
+                    
+                    // Close modal and redirect to dashboard
+                    closeMerchantLoginModal();
+                    window.location.href = 'merchant_dashboard.html';
                 } else {
                     alert('Error: ' + data.message);
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to create account. Please try again.');
+                console.error('Login error:', error);
+                alert('Failed to login. Error: ' + error.message + '. Please check if the server is running on port 8000.');
             })
             .finally(() => {
-                submitBtn.textContent = originalText;
+                submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
             });
         });
     }
+    */
     
     // Post event form submission
     if (postEventForm) {
@@ -896,6 +1091,146 @@ Please present this receipt at the venue entry.
     }
     
     // =========================================
+    // NEW MERCHANT LOGIN MODAL FUNCTIONS
+    // =========================================
+    
+    // Get modal elements
+    const merchantLoginModal = document.getElementById('merchantLoginModal');
+    const merchantRegisterModal = document.getElementById('merchantRegisterModal');
+    
+    // Make functions globally available
+    window.closeMerchantLoginModal = function() {
+        if (merchantLoginModal) {
+            merchantLoginModal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+    };
+    
+    window.closeMerchantRegisterModal = function() {
+        if (merchantRegisterModal) {
+            merchantRegisterModal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+    };
+    
+    window.switchToRegister = function() {
+        if (merchantLoginModal) {
+            merchantLoginModal.style.display = 'none';
+        }
+        if (merchantRegisterModal) {
+            merchantRegisterModal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+    };
+    
+    window.switchToLogin = function() {
+        if (merchantRegisterModal) {
+            merchantRegisterModal.style.display = 'none';
+        }
+        if (merchantLoginModal) {
+            merchantLoginModal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+    };
+    
+    // Close modals when clicking outside
+    if (merchantLoginModal) {
+        merchantLoginModal.addEventListener('click', function(e) {
+            if (e.target === merchantLoginModal) {
+                closeMerchantLoginModal();
+            }
+        });
+    }
+    
+    if (merchantRegisterModal) {
+        merchantRegisterModal.addEventListener('click', function(e) {
+            if (e.target === merchantRegisterModal) {
+                closeMerchantRegisterModal();
+            }
+        });
+    }
+    
+    // =========================================
     // END MERCHANT REGISTRATION MODAL
     // =========================================
+    
+    // Global registration handler function
+    window.handleRegistration = async function(e) {
+        e.preventDefault();
+        
+        // Get the form element that triggered the event
+        const form = e.target.closest('form');
+        
+        const password = form.querySelector('#regPassword').value;
+        const confirmPassword = form.querySelector('#confirmPassword').value;
+        
+        console.log('Password:', password);
+        console.log('Confirm Password:', confirmPassword);
+        console.log('Passwords match:', password === confirmPassword);
+        
+        if (password !== confirmPassword) {
+            alert('Passwords do not match!');
+            return false;
+        }
+        
+        const formData = new URLSearchParams();
+        formData.append('fullName', form.querySelector('#contactName').value);
+        formData.append('companyName', form.querySelector('#companyName').value);
+        formData.append('email', form.querySelector('#regEmail').value);
+        formData.append('phone', form.querySelector('#regPhone').value);
+        formData.append('idNumber', form.querySelector('#regIdNumber').value);
+        formData.append('password', password);
+        formData.append('businessType', form.querySelector('#businessType').value);
+        
+        const btn = document.querySelector('#merchantRegisterForm button[type="submit"]');
+        const originalText = btn.textContent;
+        btn.textContent = 'Creating Account...';
+        btn.disabled = true;
+        
+        try {
+            const response = await fetch('http://localhost:8000/api_register_merchant.py', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData.toString()
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const merchantData = {
+                    id: data.data.id,
+                    fullName: data.data.fullName,
+                    companyName: data.data.companyName,
+                    email: data.data.email,
+                    userType: 'organizer'
+                };
+                
+                localStorage.setItem('merchantData', JSON.stringify(merchantData));
+                
+                alert('Registration successful! Redirecting to dashboard...');
+                window.location.href = 'merchant_dashboard.html';
+            } else {
+                alert('Error: ' + data.message);
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+        
+        return false;
+    };
+    
+    // Toggle password visibility
+    window.togglePassword = function(inputId, button) {
+        const input = document.getElementById(inputId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            button.innerHTML = '<i class="fas fa-eye-slash"></i>';
+        } else {
+            input.type = 'password';
+            button.innerHTML = '<i class="fas fa-eye"></i>';
+        }
+    };
 });
